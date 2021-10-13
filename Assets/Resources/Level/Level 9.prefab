@@ -109,6 +109,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e4ebf6225e6c5b44b185eebf8f75366, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gameMode: 1
+  peopleOnAir: 0
   house: {fileID: 479678950}
   car: {fileID: 384367700}
   layerRing:
@@ -116,16 +118,12 @@ MonoBehaviour:
     m_Bits: 1024
   allPeople: 15
   targetRescue: 10
-  skins:
-  - {r: 1, g: 0.96448624, b: 0, a: 1}
-  - {r: 0, g: 0.43244553, b: 1, a: 1}
-  - {r: 1, g: 0.1462264, b: 0.17712328, a: 1}
-  - {r: 1, g: 0.25, b: 0.61470604, a: 1}
   rescuedText: {fileID: 1097334035}
   houseLeft: {fileID: 776172520}
   houseRight: {fileID: 1047051420}
   carLeft: {fileID: 452861343}
   carRight: {fileID: 933257602}
+  ring: {fileID: 1943694284}
 --- !u!1 &2057659885
 GameObject:
   m_ObjectHideFlags: 0
@@ -234,6 +232,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 818839812050068455, guid: b491c8db4ffee5b4babc8672bbba27e2, type: 3}
   m_PrefabInstance: {fileID: 818839811753989889}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1943694284 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 818839810357673165, guid: b491c8db4ffee5b4babc8672bbba27e2, type: 3}
+  m_PrefabInstance: {fileID: 818839811753989889}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2209f014f4a13648bdb40f1fe2439bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &1962709085 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 818839810477639516, guid: b491c8db4ffee5b4babc8672bbba27e2, type: 3}

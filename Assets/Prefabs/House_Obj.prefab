@@ -226,7 +226,7 @@ MonoBehaviour:
   ringMask:
     serializedVersion: 2
     m_Bits: 1024
-  radius: 0.24
+  radius: 0.2
   speed: 20
   TrucXoay: {fileID: 818839810576219026}
 --- !u!58 &818839810357673164

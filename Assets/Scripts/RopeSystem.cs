@@ -7,7 +7,7 @@ namespace WrappingRope
     public class RopeSystem : Singleton<RopeSystem>
     {
         
-        public static float widthSizeLine = 0.09f;
+        public static float widthSizeLine = 0.12f;
 
 
         [Header("End TEST")]

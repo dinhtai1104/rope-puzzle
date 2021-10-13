@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RingMovement : Singleton<RingMovement>
+public class RingMovement : MonoBehaviour   
 {
     [SerializeField] Rigidbody2D myRb;
     [SerializeField] LayerMask targetMask;
@@ -21,7 +21,7 @@ public class RingMovement : Singleton<RingMovement>
 
     private void Update()
     {
-        if (!GameController.Instance.IsFinish() && IsConnected())
+        if (( (GameController.lastSwing != null && !GameController.lastSwing.IsFinish())) && IsConnected())
         {
             return;
         }
@@ -63,7 +63,7 @@ public class RingMovement : Singleton<RingMovement>
             RaycastHit2D hitRingRC = Physics2D.Raycast(mPos, Vector3.zero, Mathf.Infinity, ringMask);
             if (hitRingRC.transform != null)
             {
-                if (GameController.Instance.IsFinish())
+                if (GameController.lastSwing == null ||( GameController.lastSwing.IsFinish() && GameController.lastSwing))
                 {
                     isDrag = true;
                 }

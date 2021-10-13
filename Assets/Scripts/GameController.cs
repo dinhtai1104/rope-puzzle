@@ -9,10 +9,14 @@ using DG.Tweening;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+public enum GameMode { Rescue, Normal }
 
-public class GameController : Singleton<GameController>
+public class GameController : MonoBehaviour
 {
-
+    public static PersonController lastSwing;
+    public static int Direction = 0;
+    public GameMode gameMode = GameMode.Normal;
+    public int peopleOnAir = 0;
     [Space(10)]
     public Transform house, car;
     public LayerMask layerRing;
@@ -37,30 +41,142 @@ public class GameController : Singleton<GameController>
     public Transform houseRight;
     public Transform carLeft;
     public Transform carRight;
+    public RingMovement ring;
+
+    private int peopleOnSwing = 0;
     private void Start()
     {
+        lastSwing = null;
+        Direction = GetDirection();
         indexPerson = 0;
         listPerson = new List<PersonController>();
         rescuedText.text = rescuedPeople.ToString("0") + "/" + targetRescue.ToString("00");
         GameMaster.onNotifyRescuedPeople += this.HandleOnNotifyRescuedPeople;
+        GameMaster.onNotifyRescuedPeopleOnAir += this.HandleOnNotifyRescuedPeopleOnAir;
+        GameMaster.onNotifyRescuedPeopleDie += this.HandleOnNotifyRescuedPeopleDie;
         for (int i = 0; i < allPeople; i++)
         {
-            PersonController person = PoolingSystem.Instance.GetPerson();
-            person.transform.position = new Vector3(Random.Range(houseLeft.position.x, houseRight.position.x), houseLeft.position.y, 0);
-            person.InitPerson(houseLeft.position, houseRight.position, carLeft.position, carRight.position);
+            Vector2 pos = new Vector3(Random.Range(houseLeft.position.x, houseRight.position.x), houseLeft.position.y, 0);
+            PersonController person = PoolingSystem.Instance.GetPerson(pos);
             person.gameObject.SetActive(true);
+            person.InitPerson(houseLeft.position, houseRight.position, carLeft.position, carRight.position);
             listPerson.Add(person);
+        }
+    }
+
+    private void HandleOnNotifyRescuedPeopleDie()
+    {
+        peopleOnSwing--;
+
+    }
+
+    private void HandleOnNotifyRescuedPeopleOnAir()
+    {
+        peopleOnAir--;
+        if (peopleOnSwing == 0)
+        {
+            if (gameMode == GameMode.Normal)
+            {
+                if (indexPerson >= allPeople)
+                {
+                    if (rescuedPeople < targetRescue)
+                    {
+                        // lose
+                        Debug.Log("Lose");
+                        return;
+                    }
+                    else
+                    {
+                        Debug.Log("WIn");
+                        GameManager.Instance.State = STATE.WIN;
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                // allPeople + peopleOnAir
+                if (indexPerson >= allPeople)
+                {
+                    if (peopleOnAir > 0)
+                    {
+                        Debug.Log("Lose");
+                        GameManager.Instance.State = STATE.LOSE;
+                    }
+                    else
+                    {
+                        if (rescuedPeople < targetRescue)
+                        {
+                            Debug.Log("Lose");
+                            GameManager.Instance.State = STATE.LOSE;
+                        }
+                        else
+                        {
+                            Debug.Log("WIN");
+                            GameManager.Instance.State = STATE.WIN;
+                        }
+                    }
+                }
+            }
         }
     }
 
     private void HandleOnNotifyRescuedPeople()
     {
+        peopleOnSwing--;
         rescuedPeople++;
+
         rescuedText.text = rescuedPeople.ToString("00") + "/" + targetRescue.ToString("00");
         rescuedText.rectTransform.DOScale(Vector3.one * 1.1f, 0.1f).OnComplete(() =>
         {
             rescuedText.rectTransform.DOScale(Vector3.one, 0.1f);
         });
+        if (peopleOnSwing == 0) {
+            if (gameMode == GameMode.Normal)
+            {
+                if (indexPerson >= allPeople)
+                {
+                    if (rescuedPeople < targetRescue)
+                    {
+                        // lose
+                        Debug.Log("Lose");
+                        GameManager.Instance.State = STATE.LOSE;
+                        return;
+                    }
+                    else
+                    {
+                        Debug.Log("WIn");
+                        GameManager.Instance.State = STATE.WIN;
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                // allPeople + peopleOnAir
+                if (indexPerson >= allPeople)
+                {
+                    if (peopleOnAir > 0)
+                    {
+                        Debug.Log("Lose");
+                        GameManager.Instance.State = STATE.LOSE;
+                    }
+                    else
+                    {
+                        if (rescuedPeople < targetRescue)
+                        {
+                            Debug.Log("Lose");
+                            GameManager.Instance.State = STATE.LOSE;
+                        }
+                        else
+                        {
+                            Debug.Log("WIN");
+                            GameManager.Instance.State = STATE.WIN;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public int GetDirection()
@@ -89,22 +205,25 @@ public class GameController : Singleton<GameController>
             Vector2 mPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             RaycastHit2D hitRingRC = Physics2D.Raycast(mPos, Vector3.zero, Mathf.Infinity, layerRing);
             if (hitRingRC.transform == null) {
-                if (RingMovement.Instance.IsConnected())
+                if (ring.IsConnected())
                 {
                     if (indexPerson < listPerson.Count)
                     {
+                        lastSwing = listPerson[indexPerson];
                         listPerson[indexPerson].StartZipline(RopeSystem.Instance.getPath());
                         indexPerson++;
+                        peopleOnSwing++;
                     }
                 }
             }
         }
     }
 
-    public override void OnDestroy()
+    public void OnDestroy()
     {
         GameMaster.onNotifyRescuedPeople -= this.HandleOnNotifyRescuedPeople;
-        base.OnDestroy();
+        GameMaster.onNotifyRescuedPeopleOnAir -= this.HandleOnNotifyRescuedPeopleOnAir;
+        GameMaster.onNotifyRescuedPeopleDie -= this.HandleOnNotifyRescuedPeopleDie;
     }
 
 #if UNITY_EDITOR

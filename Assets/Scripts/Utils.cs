@@ -31,6 +31,10 @@ public class Utils
         set
         {
             levelCurrent = value;
+            if (levelCurrent >= GameManager.TotalLevel)
+            {
+                levelCurrent = GameManager.TotalLevel;
+            }
             if (levelCurrent > levelMax)
             {
                 LEVEL_MAX = levelCurrent;

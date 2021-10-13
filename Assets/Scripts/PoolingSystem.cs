@@ -6,7 +6,7 @@ public class PoolingSystem : Singleton<PoolingSystem>
 {
     public PersonController personPrefab;
 
-    private List<PersonController> listPerson;
+    private List<PersonController> listPerson = new List<PersonController>();
     private void Start()
     {
         listPerson = new List<PersonController>();
@@ -14,7 +14,7 @@ public class PoolingSystem : Singleton<PoolingSystem>
 
 
     private int personIndex = 0;
-    public PersonController GetPerson()
+    public PersonController GetPerson(Vector2 pos)
     {
         if (personIndex >= listPerson.Count)
         {
@@ -23,6 +23,7 @@ public class PoolingSystem : Singleton<PoolingSystem>
             per.gameObject.SetActive(false);
             listPerson.Add(per);
         }
+        listPerson[personIndex].transform.position = pos;
         return listPerson[personIndex++];
     }
 

@@ -24,8 +24,10 @@ public class PersonController : MonoBehaviour
     private float timeSwap = 0;
     private float timeControl = 0;
     private int index = 0;
+    private bool isOnAir = false;
     private void OnEnable()
     {
+        isOnAir = false;
         index = 0;
         skin.SetColor(skinColors[Random.Range(0, skinColors.Length)]);
         colliderBody.SetActive(true);
@@ -36,6 +38,13 @@ public class PersonController : MonoBehaviour
         timeControl = Time.time;
         isAlive = true;
         isRescued = false;
+        if (gameObject.layer != LayerMask.NameToLayer("Rescue2"))
+        {
+            myRb.isKinematic = false;
+        } else
+        {
+            isOnAir = true;
+        }
         isSwing = false;
         myAnimator.SetBool("swing", isSwing);
     }
@@ -115,9 +124,28 @@ public class PersonController : MonoBehaviour
     private IEnumerator OnZipline()
     {
         isSwing = true;
-        myAnimator.SetBool("swing", isSwing);
-        myRb.isKinematic = true;
-        while(index < path.Count && isAlive)
+        if (!isOnAir)
+        {
+            transform.DOMoveX(path[index].x, 0.2f).OnComplete(() =>
+            {
+                myAnimator.SetBool("swing", isSwing);
+                myRb.isKinematic = true;
+                transform.position = path[index];
+                StartCoroutine(StartMove());
+            });
+        } else
+        {
+            myAnimator.SetBool("swing", isSwing);
+            myRb.isKinematic = true;
+            StartCoroutine(StartMove());
+        }
+        yield return null;
+    }
+
+    IEnumerator StartMove()
+    {
+        
+        while (index < path.Count && isAlive)
         {
             transform.position = Vector3.MoveTowards(transform.position, path[index], speedOnZipline * Time.deltaTime);
             if (Vector2.Distance(transform.position, path[index]) < 0.05f)
@@ -136,8 +164,8 @@ public class PersonController : MonoBehaviour
             myAnimator.SetBool("swing", isSwing);
             left = leftCar;
             right = rightCar;
-            transform.DOMove(transform.position + Vector3.down * 0.5f, 0f);
-            transform.DOMove( transform.position + Vector3.right * GameController.Instance.GetDirection() ,0.5f );
+            transform.Translate(Vector3.down * 0.5f);
+            transform.DOMove(transform.position + Vector3.right * GameController.Direction, 0.5f);
             //Call Event when rescue touch ground
             GameMaster.onNotifyRescuedPeople?.Invoke();
         }
@@ -146,6 +174,12 @@ public class PersonController : MonoBehaviour
     public bool IsFinish()
     {
         return (isRescued && !isSwing) || (!isAlive);
+    }
+
+    private void OnDisable()
+    {
+        transform.DOKill();
+        StopAllCoroutines();
     }
 
     public void ChangeLayer()
@@ -166,6 +200,7 @@ public class PersonController : MonoBehaviour
                 myRb.isKinematic = false;
                 myRb.AddForce(new Vector2(Random.Range(-1, 1), 2) * 10, ForceMode2D.Impulse);
                 myAnimator.SetBool("swing", false);
+                GameMaster.onNotifyRescuedPeopleDie?.Invoke();
             }
         } 
         else if (collision.CompareTag("boundary"))
@@ -177,10 +212,16 @@ public class PersonController : MonoBehaviour
             PersonController rescue = collision.GetComponentInParent<PersonController>();
             if (rescue != null)
             {
+                //Call Event Rescued Other People
+                GameMaster.onNotifyRescuedPeopleOnAir?.Invoke();
+
                 rescue.transform.eulerAngles = Vector3.zero;
                 rescue.gameObject.layer = LayerMask.NameToLayer("Rescue");
                 rescue.ChangeLayer();
                 rescue.index = this.index;
+                rescue.isSwing = true;
+                rescue.myAnimator.SetBool("swing", isSwing);
+                rescue.myRb.isKinematic = true;
                 rescue.transform.position = transform.position;
                 rescue.InitPerson(leftHouse, rightHouse, leftCar, rightCar);
                 StartCoroutine(waitAction(() => { rescue.StartZipline(WrappingRope.RopeSystem.Instance.getPath()); }, 0.1f));
